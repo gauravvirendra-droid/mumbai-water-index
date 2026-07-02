@@ -1,0 +1,56 @@
+name: Mumbai Water Index — daily
+
+on:
+  schedule:
+    - cron: "30 2 * * *"      # 08:00 IST (02:30 UTC). Actions cron runs in UTC and can lag a few minutes.
+  workflow_dispatch: {}         # adds a "Run workflow" button so you can fire it by hand anytime
+
+permissions:
+  contents: write               # needed so the job can commit history.db back to the repo
+
+concurrency:                    # never let two runs overlap and race on history.db
+  group: mwi-daily
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Fetch + compute
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python fetch_compute.py
+
+      - name: Render + send to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python render_and_send.py
+
+      - name: Keep the exact PNGs as a backup (7-day retention)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frames-${{ github.run_id }}
+          path: out/**/frame*.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Persist history.db (this is your dataset — commit it back)
+        run: |
+          git config user.name "mwi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add history.db
+          git commit -m "history: $(date -u +%Y-%m-%d)" || echo "nothing to commit"
+          git push
