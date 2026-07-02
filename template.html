@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mumbai Water Index — Daily Story Template</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#060B18;
+    --surface:#0C1830;
+    --surface-2:#152949;
+    --line:rgba(124,224,255,.14);
+    --water:#2FA9E8;
+    --water-deep:#1C77C4;
+    --water-bright:#7CE0FF;
+    --text:#EAF1FB;
+    --muted:#8CA3C7;
+    --good:#35D07F;
+    --bad:#FF6B6B;
+    --warn:#F6B24B;
+    --disp:"Barlow Condensed",sans-serif;
+    --head:"Space Grotesk",sans-serif;
+    --body:"Inter",sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#02040a}
+  body{
+    font-family:var(--body);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+    padding:40px 0 80px;
+  }
+
+  .caption{
+    font-family:var(--head);
+    color:#5f7599;
+    font-size:15px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-top:24px;
+  }
+
+  /* ---------- FRAME SHELL (1080 x 1920) ---------- */
+  .frame{
+    position:relative;
+    width:1080px;
+    height:1920px;
+    overflow:hidden;
+    background:
+      radial-gradient(120% 60% at 50% -8%, #163661 0%, rgba(22,54,97,0) 55%),
+      linear-gradient(180deg,#0A1730 0%, #060B18 62%, #05090f 100%);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+    /* top & bottom safe zones for Instagram UI */
+    padding:196px 84px 226px;
+  }
+  /* fine rain texture */
+  .frame::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:repeating-linear-gradient(74deg,
+      rgba(124,224,255,.05) 0px,
+      rgba(124,224,255,.05) 1px,
+      transparent 1px,
+      transparent 26px);
+    opacity:.5;
+    pointer-events:none;
+  }
+  .frame > *{position:relative;z-index:1}
+
+  /* ---------- HEAD ---------- */
+  .head{border-bottom:1px solid var(--line);padding-bottom:26px}
+  .eyebrow{
+    font-family:var(--head);
+    font-weight:600;
+    font-size:26px;
+    letter-spacing:5px;
+    text-transform:uppercase;
+    color:var(--water-bright);
+    display:flex;align-items:center;gap:16px;
+  }
+  .eyebrow::before{
+    content:"";width:34px;height:3px;border-radius:3px;
+    background:var(--water-bright);display:inline-block;
+  }
+  .wordmark{
+    font-family:var(--head);
+    font-weight:700;
+    font-size:52px;
+    letter-spacing:-1px;
+    margin-top:14px;
+    line-height:1;
+  }
+  .daterow{
+    font-family:var(--body);
+    font-weight:500;
+    font-size:27px;
+    color:var(--muted);
+    margin-top:16px;
+    letter-spacing:.3px;
+  }
+
+  /* ---------- BODY ---------- */
+  .body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+  /* ---------- FOOT ---------- */
+  .foot{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--head);font-size:26px;letter-spacing:3px;
+    color:var(--muted);text-transform:uppercase;
+    border-top:1px solid var(--line);padding-top:24px;
+  }
+  .foot .idx b{color:var(--water-bright);font-weight:700}
+
+  /* ================= FRAME 1 — VERDICT ================= */
+  .verdict{display:flex;align-items:center;gap:56px;justify-content:center}
+  .verdict .score{display:flex;flex-direction:column;align-items:flex-end;line-height:.78}
+  .verdict .score .num{font-family:var(--disp);font-weight:800;font-size:340px}
+  .verdict .score .of{font-family:var(--disp);font-weight:600;font-size:86px;color:var(--muted);margin-top:8px}
+
+  .status{margin-top:70px;text-align:center}
+  .status .tag{font-family:var(--disp);font-weight:800;font-size:88px;letter-spacing:1px;line-height:1}
+  .status .sub{font-family:var(--body);font-weight:500;font-size:38px;color:var(--muted);margin-top:14px}
+  .takeaway{
+    margin-top:64px;text-align:center;
+    font-family:var(--body);font-weight:500;font-size:44px;line-height:1.35;
+    color:#CFDDF2;max-width:820px;margin-left:auto;margin-right:auto;
+  }
+  .takeaway b{color:var(--water-bright);font-weight:600}
+
+  /* ================= FRAME 2 — THE NUMBER ================= */
+  .bignum{text-align:center}
+  .bignum .n{font-family:var(--disp);font-weight:800;font-size:340px;line-height:.82}
+  .bignum .cap{font-family:var(--body);font-weight:500;font-size:44px;color:var(--muted);margin-top:6px}
+  .bignum .stor{font-family:var(--disp);font-weight:600;font-size:60px;color:var(--text);margin-top:30px;letter-spacing:.5px}
+  .chip{
+    display:inline-flex;align-items:center;gap:14px;margin-top:34px;
+    padding:18px 34px;border-radius:100px;
+    font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:.5px;
+  }
+  .chip.good{background:rgba(53,208,127,.12);color:var(--good);border:1px solid rgba(53,208,127,.35)}
+  .chip.bad{background:rgba(255,107,107,.12);color:var(--bad);border:1px solid rgba(255,107,107,.35)}
+
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:74px}
+  .cmp{
+    background:linear-gradient(180deg,var(--surface) 0%, rgba(12,24,48,.4) 100%);
+    border:1px solid var(--line);border-radius:32px;padding:44px 40px;
+  }
+  .cmp .lbl{font-family:var(--head);font-weight:600;font-size:28px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .cmp .val{font-family:var(--disp);font-weight:700;font-size:120px;line-height:.9;margin-top:20px}
+  .cmp .val small{font-size:52px;color:var(--muted);font-weight:600}
+  .cmp .delta{font-family:var(--body);font-weight:600;font-size:40px;margin-top:18px;display:flex;align-items:center;gap:12px}
+  .up{color:var(--good)} .down{color:var(--bad)}
+
+  /* ================= FRAME 3 — RAINFALL ================= */
+  .rain{display:grid;grid-template-columns:1fr 1px 1fr;gap:48px;align-items:center}
+  .rain .sep{background:var(--line);height:340px;align-self:center}
+  .rcol{text-align:center}
+  .rcol .who{font-family:var(--head);font-weight:600;font-size:30px;letter-spacing:2px;text-transform:uppercase;color:var(--water-bright)}
+  .rcol .whosub{font-family:var(--body);font-size:26px;color:var(--muted);margin-top:8px}
+  .rcol .mm{font-family:var(--disp);font-weight:800;font-size:216px;line-height:.86;margin-top:28px}
+  .rcol .mm small{font-size:70px;color:var(--muted);font-weight:600}
+  .rainverdict{
+    margin-top:70px;text-align:center;font-family:var(--body);font-weight:500;
+    font-size:44px;line-height:1.35;color:#CFDDF2;max-width:860px;margin-left:auto;margin-right:auto;
+  }
+  .rainverdict b{color:var(--water-bright);font-weight:600}
+  .season{
+    margin-top:64px;background:var(--surface);border:1px solid var(--line);border-radius:28px;
+    padding:38px 44px;display:flex;justify-content:space-between;gap:30px;
+  }
+  .season .s{flex:1}
+  .season .s .k{font-family:var(--head);font-size:24px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+  .season .s .v{font-family:var(--disp);font-weight:700;font-size:64px;margin-top:8px}
+  .season .s .p{font-family:var(--body);font-size:30px;color:var(--good);margin-top:4px;font-weight:600}
+  .season .vsep{width:1px;background:var(--line)}
+
+  /* ================= FRAME 4 — LAKE SCORECARD ================= */
+  .lakes{display:flex;flex-direction:column;gap:30px;margin-top:8px}
+  .lake{display:grid;grid-template-columns:360px 150px 1fr 60px;align-items:center;gap:24px}
+  .lake .lname{font-family:var(--body);font-weight:600;font-size:42px}
+  .lake .lpct{font-family:var(--disp);font-weight:700;font-size:56px;text-align:right}
+  .lake .track{height:26px;border-radius:20px;background:rgba(255,255,255,.06);overflow:hidden}
+  .lake .fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--water-deep),var(--water));min-width:6px}
+  .lake .fill.warn{background:linear-gradient(90deg,#B87A16,var(--warn))}
+  .lake .fill.bad{background:linear-gradient(90deg,#B23636,var(--bad))}
+  .lake .trend{font-size:44px;text-align:center}
+  .laketotal{
+    margin-top:48px;display:flex;justify-content:space-between;align-items:baseline;
+    border-top:1px solid var(--line);padding-top:38px;
+  }
+  .laketotal .t{font-family:var(--head);font-weight:600;font-size:40px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .laketotal .tv{font-family:var(--disp);font-weight:800;font-size:96px;color:var(--water-bright)}
+
+  /* ================= FRAME 5 — OUTLOOK + CTA ================= */
+  .outlookhead{display:flex;align-items:center;gap:28px;margin-bottom:14px}
+  .outlookhead .verdict-chip{
+    padding:16px 34px;border-radius:100px;font-family:var(--disp);font-weight:800;
+    font-size:46px;letter-spacing:1px;background:rgba(53,208,127,.12);
+    color:var(--good);border:1px solid rgba(53,208,127,.35);
+  }
+  .fcast{display:grid;grid-template-columns:repeat(7,1fr);gap:16px;margin-top:14px}
+  .fc{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px 8px;text-align:center}
+  .fc .d{font-family:var(--head);font-weight:600;font-size:27px;letter-spacing:1px}
+  .fc .dd{font-family:var(--body);font-size:20px;color:var(--muted);margin-top:2px}
+  .fc svg{margin:18px auto 12px;display:block}
+  .fc .mm{font-family:var(--disp);font-weight:700;font-size:34px;line-height:1}
+  .fc .mmu{font-family:var(--body);font-size:19px;color:var(--muted)}
+
+  .cta{
+    margin-top:auto;text-align:center;
+    background:linear-gradient(180deg,rgba(47,169,232,.14),rgba(47,169,232,.03));
+    border:1px solid rgba(124,224,255,.28);border-radius:36px;padding:56px 40px;
+  }
+  .cta .handle{font-family:var(--head);font-weight:700;font-size:62px;letter-spacing:-.5px}
+  .cta .sub{font-family:var(--body);font-weight:500;font-size:38px;color:var(--muted);margin-top:14px}
+  .source{font-family:var(--body);font-size:26px;color:#65799b;margin-top:36px;text-align:center}
+
+  @media (prefers-reduced-motion:no-preference){
+    .wave-crest{animation:drift 6s ease-in-out infinite}
+  }
+  @keyframes drift{0%,100%{transform:translateX(0)}50%{transform:translateX(-18px)}}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ALL DAILY VALUES LIVE IN THIS ONE OBJECT.
+     Swap these each morning (by hand or from your fetch script)
+     and every frame + colour updates automatically.
+     ============================================================ -->
+<script>
+/* MWI-DATA:START — the fetch script rewrites everything between these two markers each day. */
+const DATA = {
+  meta:{ handle:"allthingscities_mumbai", dateLine:"Wed 01 Jul 2026 · 6:00 AM" },
+
+  index:{ score:5.6, status:"good", tag:"IMPROVING", sub:"but still below normal for the date",
+          takeaway:"Catchment rains are lifting stocks — yet reservoirs still sit <b>far below last year.</b>" },
+
+  stock:{ pctCapacity:7.18, liveStorageML:103871,
+          changeML:6205, changePct:0.43, changeDir:"up" },
+
+  vsLastYear:{ pct:41.17, deltaPts:33.99, dir:"down" },   // dir = movement of the delta (down = we're lower)
+  vs5yr:{      pct:5.91,  deltaPts:1.27,  dir:"up" },
+
+  rain:{ catchmentMM:96, cityMM:62,
+         verdict:"Catchment is out-raining the city — <b>inflows should keep rising.</b>",
+         catchmentSeasonMM:523.98, catchmentPctNormal:126,
+         citySeasonMM:544.00, cityPctNormal:113 },
+
+  lakes:[
+    { name:"Upper Vaitarna",  pct:0.00,  trend:"down" },
+    { name:"Modak Sagar",     pct:20.00, trend:"down" },
+    { name:"Tansa",           pct:2.72,  trend:"down" },
+    { name:"Middle Vaitarna", pct:11.71, trend:"up"   },
+    { name:"Bhatsa",          pct:4.90,  trend:"up"   },
+    { name:"Vihar",           pct:50.77, trend:"up"   },
+    { name:"Tulsi",           pct:28.00, trend:"up"   }
+  ],
+  lakesTotalPct:7.18,
+
+  outlook:{ verdict:"FAVOURABLE",
+    days:[
+      { d:"WED", dd:"02 Jul", intensity:"heavy",    mm:"80–120" },
+      { d:"THU", dd:"03 Jul", intensity:"heavy",    mm:"70–110" },
+      { d:"FRI", dd:"04 Jul", intensity:"heavy",    mm:"80–120" },
+      { d:"SAT", dd:"05 Jul", intensity:"moderate", mm:"50–90"  },
+      { d:"SUN", dd:"06 Jul", intensity:"moderate", mm:"30–60"  },
+      { d:"MON", dd:"07 Jul", intensity:"moderate", mm:"30–50"  },
+      { d:"TUE", dd:"08 Jul", intensity:"light",    mm:"20–40"  }
+    ]
+  }
+};
+/* MWI-DATA:END */
+</script>
+
+<section class="frame" id="frame-1" data-frame="1">
+  <div class="head">
+    <div class="eyebrow">Daily Water Security</div>
+    <div class="wordmark">MUMBAI WATER INDEX</div>
+    <div class="daterow" data-bind="dateFull"></div>
+  </div>
+  <div class="body">
+    <div class="verdict">
+      <div class="score">
+        <span class="num" data-bind="score"></span>
+        <span class="of">/ 10</span>
+      </div>
+      <!-- signature: graduated measuring column -->
+      <svg id="gauge" width="342" height="760" viewBox="0 0 360 800" aria-hidden="true"></svg>
+    </div>
+    <div class="status">
+      <div class="tag" data-bind="tag"></div>
+      <div class="sub" data-bind="statusSub"></div>
+    </div>
+    <div class="takeaway" data-bind="takeaway"></div>
+  </div>
+  <div class="foot"><span class="idx">01<b> / 05</b></span><span>Swipe →</span></div>
+</section>
+
+<section class="frame" id="frame-2" data-frame="2">
+  <div class="head">
+    <div class="eyebrow">Total Water Stock · 7 Lakes</div>
+    <div class="wordmark">MUMBAI WATER INDEX</div>
+    <div class="daterow" data-bind="dateFull"></div>
+  </div>
+  <div class="body" style="align-items:center">
+    <div class="bignum">
+      <div class="n" data-bind="stockPct"></div>
+      <div class="cap">of usable capacity</div>
+      <div class="stor" data-bind="storage"></div>
+      <div class="chip" data-bind="dayChangeChip"></div>
+    </div>
+    <div class="compare" style="width:100%">
+      <div class="cmp">
+        <div class="lbl">vs same day last year</div>
+        <div class="val" data-bind="lyPct"></div>
+        <div class="delta" data-bind="lyDelta"></div>
+      </div>
+      <div class="cmp">
+        <div class="lbl">vs 5-year average</div>
+        <div class="val" data-bind="avgPct"></div>
+        <div class="delta" data-bind="avgDelta"></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="idx">02<b> / 05</b></span><span>Swipe →</span></div>
+</section>
+
+<section class="frame" id="frame-3" data-frame="3">
+  <div class="head">
+    <div class="eyebrow">Rainfall Today</div>
+    <div class="wordmark">MUMBAI WATER INDEX</div>
+    <div class="daterow" data-bind="dateFull"></div>
+  </div>
+  <div class="body">
+    <div class="rain">
+      <div class="rcol">
+        <div class="who">Catchment</div>
+        <div class="whosub">7 lake areas</div>
+        <div class="mm" data-bind="rainCatch"></div>
+      </div>
+      <div class="sep"></div>
+      <div class="rcol">
+        <div class="who">City</div>
+        <div class="whosub">Mumbai gauges</div>
+        <div class="mm" data-bind="rainCity"></div>
+      </div>
+    </div>
+    <div class="rainverdict" data-bind="rainVerdict"></div>
+    <div class="season">
+      <div class="s">
+        <div class="k">Catchment · season</div>
+        <div class="v" data-bind="catchSeason"></div>
+        <div class="p" data-bind="catchNormal"></div>
+      </div>
+      <div class="vsep"></div>
+      <div class="s">
+        <div class="k">City · season</div>
+        <div class="v" data-bind="citySeason"></div>
+        <div class="p" data-bind="cityNormal"></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="idx">03<b> / 05</b></span><span>Swipe →</span></div>
+</section>
+
+<section class="frame" id="frame-4" data-frame="4">
+  <div class="head">
+    <div class="eyebrow">Lake by Lake · % Full</div>
+    <div class="wordmark">MUMBAI WATER INDEX</div>
+    <div class="daterow" data-bind="dateFull"></div>
+  </div>
+  <div class="body">
+    <div class="lakes" id="lakeList"></div>
+    <div class="laketotal">
+      <div class="t">All 7 lakes combined</div>
+      <div class="tv" data-bind="lakesTotal"></div>
+    </div>
+  </div>
+  <div class="foot"><span class="idx">04<b> / 05</b></span><span>Swipe →</span></div>
+</section>
+
+<section class="frame" id="frame-5" data-frame="5">
+  <div class="head">
+    <div class="eyebrow">7-Day Outlook</div>
+    <div class="wordmark">MUMBAI WATER INDEX</div>
+    <div class="daterow" data-bind="dateFull"></div>
+  </div>
+  <div class="body">
+    <div class="outlookhead">
+      <span style="font-family:var(--body);font-size:34px;color:var(--muted)">IMD forecast for Mumbai —</span>
+      <span class="verdict-chip" data-bind="outlookVerdict"></span>
+    </div>
+    <div class="fcast" id="fcast"></div>
+    <div class="cta">
+      <div class="handle" data-bind="ctaHandle"></div>
+      <div class="sub">The Mumbai Water Index, every morning.</div>
+    </div>
+    <div class="source">Source · BMC Hydraulic Engineer's Dept · IMD Mumbai</div>
+  </div>
+  <div class="foot"><span class="idx">05<b> / 05</b></span><span>allthingscities_mumbai</span></div>
+</section>
+
+<script>
+(function(){
+  const D = DATA;
+  const nf = n => n.toLocaleString('en-IN');
+  const arrow = dir => dir==="up" ? "▲" : "▼";
+  const set = (k,v) => document.querySelectorAll('[data-bind="'+k+'"]').forEach(e=>{e.innerHTML=v;});
+
+  // ---- header (shared) ----
+  set('dateFull', D.meta.handle + " · " + D.meta.dateLine);
+
+  // ---- FRAME 1 ----
+  set('score', D.index.score.toFixed(1));
+  const tagEl = document.querySelector('[data-bind="tag"]');
+  set('tag', D.index.tag);
+  tagEl.style.color = D.index.status==="good" ? "var(--good)" : D.index.status==="warn" ? "var(--warn)" : "var(--bad)";
+  set('statusSub', D.index.sub);
+  set('takeaway', D.index.takeaway);
+  drawGauge(D.index.score);
+
+  // ---- FRAME 2 ----
+  set('stockPct', D.stock.pctCapacity.toFixed(2)+"%");
+  set('storage', nf(D.stock.liveStorageML)+" ML in live storage");
+  const chip = document.querySelector('[data-bind="dayChangeChip"]');
+  chip.classList.add(D.stock.changeDir==="up"?"good":"bad");
+  set('dayChangeChip', arrow(D.stock.changeDir)+" "+(D.stock.changeDir==="up"?"+":"−")+nf(D.stock.changeML)+
+      " ML today ("+(D.stock.changeDir==="up"?"+":"−")+D.stock.changePct.toFixed(2)+"%)");
+
+  set('lyPct', D.vsLastYear.pct.toFixed(2)+"<small>%</small>");
+  const lyD = document.querySelector('[data-bind="lyDelta"]');
+  lyD.className = "delta "+(D.vsLastYear.dir==="up"?"up":"down");
+  set('lyDelta', arrow(D.vsLastYear.dir)+" "+D.vsLastYear.deltaPts.toFixed(2)+" pts "+(D.vsLastYear.dir==="up"?"higher":"lower"));
+
+  set('avgPct', D.vs5yr.pct.toFixed(2)+"<small>%</small>");
+  const avD = document.querySelector('[data-bind="avgDelta"]');
+  avD.className = "delta "+(D.vs5yr.dir==="up"?"up":"down");
+  set('avgDelta', arrow(D.vs5yr.dir)+" "+D.vs5yr.deltaPts.toFixed(2)+" pts "+(D.vs5yr.dir==="up"?"higher":"lower"));
+
+  // ---- FRAME 3 ----
+  set('rainCatch', D.rain.catchmentMM+"<small> mm</small>");
+  set('rainCity',  D.rain.cityMM+"<small> mm</small>");
+  set('rainVerdict', D.rain.verdict);
+  set('catchSeason', Math.round(D.rain.catchmentSeasonMM)+" mm");
+  set('catchNormal', D.rain.catchmentPctNormal+"% of normal");
+  set('citySeason',  Math.round(D.rain.citySeasonMM)+" mm");
+  set('cityNormal',  D.rain.cityPctNormal+"% of normal");
+
+  // ---- FRAME 4 ----
+  const lakeList = document.getElementById('lakeList');
+  D.lakes.forEach(l=>{
+    const cls = l.pct < 15 ? "bad" : l.pct < 40 ? "warn" : "";
+    const w = Math.max(2, Math.min(100, l.pct));
+    const tcol = l.trend==="up" ? "var(--good)" : "var(--bad)";
+    const row = document.createElement('div');
+    row.className = "lake";
+    row.innerHTML =
+      '<div class="lname">'+l.name+'</div>'+
+      '<div class="lpct">'+l.pct.toFixed(2)+'%</div>'+
+      '<div class="track"><div class="fill '+cls+'" style="width:'+w+'%"></div></div>'+
+      '<div class="trend" style="color:'+tcol+'">'+arrow(l.trend)+'</div>';
+    lakeList.appendChild(row);
+  });
+  set('lakesTotal', D.lakesTotalPct.toFixed(2)+"%");
+
+  // ---- FRAME 5 ----
+  set('outlookVerdict', D.outlook.verdict);
+  set('ctaHandle', "@"+D.meta.handle);
+  const fc = document.getElementById('fcast');
+  D.outlook.days.forEach(day=>{
+    const el = document.createElement('div');
+    el.className = "fc";
+    el.innerHTML =
+      '<div class="d">'+day.d+'</div>'+
+      '<div class="dd">'+day.dd+'</div>'+
+      rainIcon(day.intensity)+
+      '<div class="mm">'+day.mm+'</div>'+
+      '<div class="mmu">mm</div>';
+    fc.appendChild(el);
+  });
+
+  // ---- signature gauge: graduated measuring column ----
+  function drawGauge(score){
+    const svg = document.getElementById('gauge');
+    const yTop=40, yBot=760, colX=60, colW=180, colTop=20, colH=760;
+    const fy = yBot - (score/10)*(yBot-yTop);       // water crest y
+    // wavy water body down to bottom
+    const water =
+      'M'+colX+','+fy+
+      ' Q'+(colX+45)+','+(fy-14)+' '+(colX+90)+','+fy+
+      ' T'+(colX+colW)+','+fy+
+      ' V800 H'+colX+' Z';
+    const crest =
+      'M'+colX+','+fy+
+      ' Q'+(colX+45)+','+(fy-14)+' '+(colX+90)+','+fy+
+      ' T'+(colX+colW)+','+fy;
+    let ticks='';
+    for(let i=0;i<=10;i++){
+      const ty = yBot - (i/10)*(yBot-yTop);
+      const long = i%2===0;
+      ticks += '<line x1="'+(colX+colW+14)+'" y1="'+ty+'" x2="'+(colX+colW+(long?42:26))+'" y2="'+ty+
+               '" stroke="rgba(140,163,199,.5)" stroke-width="'+(long?3:2)+'"/>';
+      if(long) ticks += '<text x="'+(colX+colW+56)+'" y="'+(ty+12)+'" fill="#A9C0E0" '+
+               'font-family="Barlow Condensed" font-weight="700" font-size="36">'+i+'</text>';
+    }
+    svg.innerHTML =
+      '<defs>'+
+        '<clipPath id="vial"><rect x="'+colX+'" y="'+colTop+'" width="'+colW+'" height="'+colH+'" rx="90"/></clipPath>'+
+        '<linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">'+
+          '<stop offset="0" stop-color="#4FC0F5"/><stop offset="1" stop-color="#1C77C4"/>'+
+        '</linearGradient>'+
+      '</defs>'+
+      '<rect x="'+colX+'" y="'+colTop+'" width="'+colW+'" height="'+colH+'" rx="90" fill="rgba(255,255,255,.04)" stroke="rgba(124,224,255,.35)" stroke-width="3"/>'+
+      '<g clip-path="url(#vial)">'+
+        '<path d="'+water+'" fill="url(#wg)"/>'+
+        '<path class="wave-crest" d="'+crest+'" fill="none" stroke="#9DEBFF" stroke-width="4" opacity=".85"/>'+
+      '</g>'+
+      ticks;
+  }
+
+  function rainIcon(kind){
+    const drops = kind==="heavy"?3:kind==="moderate"?2:1;
+    const col = kind==="heavy"?"#4FC0F5":kind==="moderate"?"#7CE0FF":"#B7D4EC";
+    let d='';
+    const xs = drops===3?[26,38,50]:drops===2?[30,46]:[38];
+    xs.forEach(x=>{ d+='<line x1="'+x+'" y1="40" x2="'+(x-4)+'" y2="52" stroke="'+col+'" stroke-width="3" stroke-linecap="round"/>'; });
+    return '<svg width="76" height="60" viewBox="0 0 76 60">'+
+      '<path d="M22 36 a13 13 0 0 1 3 -25 a17 17 0 0 1 32 6 a11 11 0 0 1 -3 21 Z" fill="rgba(124,224,255,.18)" stroke="#8CA3C7" stroke-width="2"/>'+
+      d+'</svg>';
+  }
+})();
+</script>
+</body>
+</html>
