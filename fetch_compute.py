@@ -199,6 +199,11 @@ def clamp(x, lo=0.0, hi=10.0):
     return max(lo, min(hi, x))
 
 
+def _n(v, default=0.0):
+    """Treat a missing/blank value (None) as a number so nothing crashes."""
+    return default if v is None else v
+
+
 def compute_index(total_pct, total_ml, avg5yr_pct, change_pts, catchment_mm):
     relative = clamp(5 * (total_pct / avg5yr_pct)) if avg5yr_pct else 5.0
     momentum = clamp(5 + change_pts * 2 + min(catchment_mm, 100) / 50)
@@ -254,11 +259,19 @@ def assemble(date, lakes, city, precip, conn):
     avg5yr   = base.get("avg5yr_pct")
     last_year = base.get("last_year_pct")
 
-    total_pct = lakes["total_pct"]
-    total_ml  = lakes["total_ml"]
-    catchment_mm = round(sum(l["rain_today_mm"] for l in lakes["lakes"]) / len(lakes["lakes"]))
-    catch_season = round(sum(l.get("rain_season_mm") or 0 for l in lakes["lakes"]) / len(lakes["lakes"]), 1)
-    city_mm = city["city_today_mm"]
+    # sanitise: BMC/IMD pages sometimes leave a field blank, which arrives as None
+    for l in lakes["lakes"]:
+        l["pct"]            = _n(l.get("pct"))
+        l["rain_today_mm"]  = _n(l.get("rain_today_mm"))
+        l["rain_season_mm"] = _n(l.get("rain_season_mm"))
+    total_pct   = _n(lakes.get("total_pct"))
+    total_ml    = _n(lakes.get("total_ml"))
+    city_mm     = _n(city.get("city_today_mm"))
+    city_season = _n(city.get("city_season_mm"))
+
+    rains = [l["rain_today_mm"] for l in lakes["lakes"] if l["rain_today_mm"]]
+    catchment_mm = round(sum(rains) / len(rains)) if rains else 0
+    catch_season = round(sum(l["rain_season_mm"] for l in lakes["lakes"]) / len(lakes["lakes"]), 1)
 
     # day-over-day from history (before we overwrite today's row)
     prev = get_row(conn, (date - dt.timedelta(days=1)).strftime("%Y-%m-%d"))
@@ -281,7 +294,7 @@ def assemble(date, lakes, city, precip, conn):
     tag, status, sub_line, takeaway = build_status(sub)
 
     catch_normal = round(catch_season / base["catch_season_normal_mm"] * 100) if base.get("catch_season_normal_mm") else None
-    city_normal  = round(city["city_season_mm"] / base["city_season_normal_mm"] * 100) if base.get("city_season_normal_mm") else None
+    city_normal  = round(city_season / base["city_season_normal_mm"] * 100) if base.get("city_season_normal_mm") else None
 
     fc_verdict, fc_days = bucket_forecast(precip, date)
 
@@ -301,7 +314,7 @@ def assemble(date, lakes, city, precip, conn):
                              if catchment_mm > city_mm else
                              "The city is seeing more rain than the catchments today."),
                  "catchmentSeasonMM": catch_season, "catchmentPctNormal": catch_normal,
-                 "citySeasonMM": round(city["city_season_mm"], 1), "cityPctNormal": city_normal},
+                 "citySeasonMM": round(city_season, 1), "cityPctNormal": city_normal},
         "lakes": lakes_out, "lakesTotalPct": round(total_pct, 2),
         "outlook": {"verdict": fc_verdict, "days": fc_days},
     }
