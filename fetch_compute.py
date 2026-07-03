@@ -94,12 +94,20 @@ MOCK_FORECAST_PRECIP = [95, 90, 100, 70, 45, 40, 30, 25]  # today + next 7 days 
 # ----------------------------------------------------------------------------
 # FETCHERS (live)  — kept small; each returns a plain dict or raises
 # ----------------------------------------------------------------------------
-def _get(url, as_bytes=False, timeout=30):
-    import requests
+def _get(url, as_bytes=False, timeout=60, retries=3):
+    """GET with a longer timeout and a few retries — a slow source shouldn't kill the run."""
+    import requests, time
     headers = {"User-Agent": "Mozilla/5.0 (MumbaiWaterIndex/1.0)"}
-    r = requests.get(url, headers=headers, timeout=timeout)
-    r.raise_for_status()
-    return r.content if as_bytes else r.text
+    last = None
+    for attempt in range(retries):
+        try:
+            r = requests.get(url, headers=headers, timeout=timeout)
+            r.raise_for_status()
+            return r.content if as_bytes else r.text
+        except Exception as e:
+            last = e
+            time.sleep(3 * (attempt + 1))
+    raise last
 
 
 def _llm_extract(raw_text, instruction, schema_hint):
@@ -356,7 +364,11 @@ def main():
     else:
         print("Fetching lake storage (BMC)…");  lakes  = fetch_lakes_live()
         print("Fetching city rainfall (IMD)…"); city   = fetch_city_rain_live()
-        print("Fetching forecast (Open-Meteo)…"); precip = fetch_forecast_precip_live()
+        try:
+            print("Fetching forecast (Open-Meteo)…"); precip = fetch_forecast_precip_live()
+        except Exception as e:
+            print("  forecast source unreachable, using a neutral fallback:", e)
+            precip = [0] * 8
 
     conn = db()
     data = assemble(date, lakes, city, precip, conn)
