@@ -75,6 +75,8 @@ def send_media_group(frame_paths, caption, token, chat_id):
     try:
         r = requests.post(url, data={"chat_id": chat_id, "media": json.dumps(media)},
                           files=files, timeout=90)
+        if not r.ok:
+            print(f"  Telegram API error {r.status_code}: {r.text}")
         r.raise_for_status()
         if not r.json().get("ok"):
             raise RuntimeError(f"Telegram error: {r.text}")
