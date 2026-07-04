@@ -1,9 +1,11 @@
 name: Mumbai Water Index — daily
 
 on:
-  schedule:
-    - cron: "30 2 * * *"      # 08:00 IST (02:30 UTC). Actions cron runs in UTC and can lag a few minutes.
-  workflow_dispatch: {}         # adds a "Run workflow" button so you can fire it by hand anytime
+  # Daily schedule disabled — frames are now generated manually from the BMC PDF.
+  # To re-enable automation later, uncomment the two lines below.
+  # schedule:
+  #   - cron: "30 2 * * *"     # 08:00 IST (02:30 UTC)
+  workflow_dispatch: {}         # keeps the manual "Run workflow" button
 
 permissions:
   contents: write               # needed so the job can commit history.db back to the repo
