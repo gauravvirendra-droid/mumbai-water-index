@@ -3,7 +3,7 @@
 Render + send  — step 2 of the daily pipeline
 =============================================
 Takes the dated HTML that fetch_compute.py produced, screenshots the five Story
-frames at 1080x1920, and sends them to your Telegram as an album for review.
+frames at 1080x1920, and posts them to a Discord channel (via webhook) for review.
 
     python render_and_send.py                 # today
     python render_and_send.py --date 2026-07-01
@@ -11,8 +11,7 @@ frames at 1080x1920, and sends them to your Telegram as an album for review.
     python render_and_send.py --dry-run        # print the caption/plan, touch nothing
 
 Needs (only when actually sending):
-    TELEGRAM_BOT_TOKEN   from @BotFather
-    TELEGRAM_CHAT_ID     your chat id (message the bot, then read getUpdates)
+    DISCORD_WEBHOOK_URL   Channel Settings -> Integrations -> Webhooks -> New Webhook -> Copy URL
 """
 
 import argparse
@@ -48,38 +47,31 @@ def screenshot_frames(html_path, frame_dir):
 
 
 def build_caption(data):
+    """Discord uses Markdown, so bold is **like this** (not HTML tags)."""
     idx, stock = data["index"], data["stock"]
-    day = data["meta"]["dateLine"].split(" \u00b7 ")[0]
-    arrow = "\u25b2" if stock["changeDir"] == "up" else "\u25bc"
-    return (f"\U0001F30A <b>Mumbai Water Index</b> \u2014 {day}\n"
-            f"{idx['score']}/10 \u00b7 {idx['tag']}\n"
+    day = data["meta"]["dateLine"].split(" · ")[0]
+    arrow = "▲" if stock["changeDir"] == "up" else "▼"
+    return (f"\U0001F30A **Mumbai Water Index** — {day}\n"
+            f"{idx['score']}/10 · {idx['tag']}\n"
             f"Stock {stock['pctCapacity']}%  {arrow}{stock['changeML']:,} ML today\n"
             f"Review, then post to Stories \U0001F447")
 
 
-def send_media_group(frame_paths, caption, token, chat_id):
-    """Send the 5 PNGs as one album of documents (uncompressed, so the files stay crisp)."""
+def send_discord(frame_paths, caption, webhook_url):
+    """Post the 5 PNGs to a Discord channel as one message (up to 10 attachments allowed)."""
     import requests
-    url = f"https://api.telegram.org/bot{token}/sendMediaGroup"
-    media, files, handles = [], {}, []
-    for i, path in enumerate(frame_paths, start=1):
-        key = f"frame{i}"
+    files, handles = {}, []
+    for i, path in enumerate(frame_paths):
         fh = open(path, "rb")
         handles.append(fh)
-        files[key] = (f"frame{i}.png", fh, "image/png")
-        item = {"type": "document", "media": f"attach://{key}"}
-        if i == 1:
-            item["caption"] = caption
-            item["parse_mode"] = "HTML"
-        media.append(item)
+        files[f"files[{i}]"] = (f"frame{i + 1}.png", fh, "image/png")
     try:
-        r = requests.post(url, data={"chat_id": chat_id, "media": json.dumps(media)},
+        r = requests.post(webhook_url,
+                          data={"payload_json": json.dumps({"content": caption})},
                           files=files, timeout=90)
         if not r.ok:
-            print(f"  Telegram API error {r.status_code}: {r.text}")
+            print(f"  Discord API error {r.status_code}: {r.text}")
         r.raise_for_status()
-        if not r.json().get("ok"):
-            raise RuntimeError(f"Telegram error: {r.text}")
     finally:
         for fh in handles:
             fh.close()
@@ -105,22 +97,22 @@ def main():
     if args.dry_run:
         print("CAPTION:\n" + caption)
         print("\nWould screenshot ->", os.path.join(frame_dir, "frame[1-5].png"))
-        print("Would send album to Telegram chat:", os.environ.get("TELEGRAM_CHAT_ID", "<TELEGRAM_CHAT_ID>"))
+        print("Would post album to Discord webhook:",
+              "set" if os.environ.get("DISCORD_WEBHOOK_URL") else "<DISCORD_WEBHOOK_URL not set>")
         return
 
-    print("Screenshotting frames\u2026")
+    print("Screenshotting frames…")
     frames = screenshot_frames(html_path, frame_dir)
     print("  wrote", ", ".join(os.path.basename(p) for p in frames))
 
     if args.no_send:
-        print("--no-send set; stopping before Telegram.")
+        print("--no-send set; stopping before Discord.")
         return
 
-    token = os.environ["TELEGRAM_BOT_TOKEN"]
-    chat_id = os.environ["TELEGRAM_CHAT_ID"]
-    print("Sending to Telegram\u2026")
-    send_media_group(frames, caption, token, chat_id)
-    print("  sent \u2713")
+    webhook_url = os.environ["DISCORD_WEBHOOK_URL"]
+    print("Posting to Discord…")
+    send_discord(frames, caption, webhook_url)
+    print("  sent ✓")
 
 
 if __name__ == "__main__":
