@@ -164,6 +164,7 @@ def fetch_lakes_live():
     if not has_lake:
         print("  ⚠ rendered BMC page has no lake names — the source may be login-gated or moved")
     schema = ('{"total_ml": number, "total_pct": number, "lakes": '
+              '[{"name": string, "pct": number, "rain_today_mm": number, "rain_season_mm": number}]}')
     instr = ("From this BMC Hydraulic Engineer's Department water-stock page, extract the seven "
              "Mumbai lakes (" + ", ".join(LAKES) + "). For each lake give its current % of live "
              "storage capacity, today's rainfall (mm) and season-to-date rainfall since 01 Jun (mm). "
