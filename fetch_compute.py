@@ -110,6 +110,32 @@ def _get(url, as_bytes=False, timeout=60, retries=3):
     raise last
 
 
+def _render_text(url, timeout_ms=60000):
+    """Load a JavaScript-driven page in a headless browser and return its rendered text.
+
+    The BMC lake-stock page is an SAP/JS portal: a plain HTTP GET returns an empty
+    shell with no numbers. Rendering it (and reading any iframes) lets the table
+    populate before we hand the text to the extractor.
+    """
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_context(
+            user_agent="Mozilla/5.0 (MumbaiWaterIndex/1.0)").new_page()
+        try:
+            page.goto(url, wait_until="networkidle", timeout=timeout_ms)
+            page.wait_for_timeout(2000)   # let any late table/XHR rendering settle
+            parts = []
+            for fr in page.frames:        # main document + every iframe (SAP portals nest them)
+                try:
+                    parts.append(fr.inner_text("body"))
+                except Exception:
+                    pass
+        finally:
+            browser.close()
+    return "\n".join(t for t in parts if t)
+
+
 def _llm_extract(raw_text, instruction, schema_hint):
     """Ask Claude to pull structured JSON out of messy page/PDF text."""
     import anthropic
@@ -119,7 +145,7 @@ def _llm_extract(raw_text, instruction, schema_hint):
         f"Return ONLY valid JSON, no prose, no markdown fences, matching this shape:\n"
         f"{schema_hint}\n\n"
         f"If a value is genuinely absent, use null.\n\n"
-        f"---- SOURCE TEXT ----\n{raw_text[:12000]}"
+        f"---- SOURCE TEXT ----\n{raw_text[:20000]}"
     )
     msg = client.messages.create(
         model="claude-sonnet-5",
@@ -132,9 +158,12 @@ def _llm_extract(raw_text, instruction, schema_hint):
 
 
 def fetch_lakes_live():
-    raw = _get(LAKE_URL)
+    raw = _render_text(LAKE_URL)          # render JS: a plain GET returns an empty portal shell
+    has_lake = any(name.split()[0].lower() in raw.lower() for name in LAKES)
+    print(f"  BMC page rendered: {len(raw)} chars, lake names present: {has_lake}")
+    if not has_lake:
+        print("  ⚠ rendered BMC page has no lake names — the source may be login-gated or moved")
     schema = ('{"total_ml": number, "total_pct": number, "lakes": '
-              '[{"name": string, "pct": number, "rain_today_mm": number, "rain_season_mm": number}]}')
     instr = ("From this BMC Hydraulic Engineer's Department water-stock page, extract the seven "
              "Mumbai lakes (" + ", ".join(LAKES) + "). For each lake give its current % of live "
              "storage capacity, today's rainfall (mm) and season-to-date rainfall since 01 Jun (mm). "
