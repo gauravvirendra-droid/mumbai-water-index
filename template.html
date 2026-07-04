@@ -436,24 +436,31 @@ const DATA = {
   set('dayChangeChip', arrow(D.stock.changeDir)+" "+(D.stock.changeDir==="up"?"+":"−")+nf(D.stock.changeML)+
       " ML today ("+(D.stock.changeDir==="up"?"+":"−")+D.stock.changePct.toFixed(2)+"%)");
 
-  set('lyPct', D.vsLastYear.pct.toFixed(2)+"<small>%</small>");
-  const lyD = document.querySelector('[data-bind="lyDelta"]');
-  lyD.className = "delta "+(D.vsLastYear.dir==="up"?"up":"down");
-  set('lyDelta', arrow(D.vsLastYear.dir)+" "+D.vsLastYear.deltaPts.toFixed(2)+" pts "+(D.vsLastYear.dir==="up"?"higher":"lower"));
-
-  set('avgPct', D.vs5yr.pct.toFixed(2)+"<small>%</small>");
-  const avD = document.querySelector('[data-bind="avgDelta"]');
-  avD.className = "delta "+(D.vs5yr.dir==="up"?"up":"down");
-  set('avgDelta', arrow(D.vs5yr.dir)+" "+D.vs5yr.deltaPts.toFixed(2)+" pts "+(D.vs5yr.dir==="up"?"higher":"lower"));
+  // Show each comparison card only when baselines.csv has a row for this date;
+  // hide it entirely while the baseline is missing (populate it as data lands).
+  const compare = (o, pctKey, deltaKey) => {
+    const card = document.querySelector('[data-bind="'+pctKey+'"]').closest('.cmp');
+    if (o.pct == null) {
+      if (card) card.style.display = "none";
+      return;
+    }
+    if (card) card.style.display = "";
+    set(pctKey, o.pct.toFixed(2)+"<small>%</small>");
+    const el = document.querySelector('[data-bind="'+deltaKey+'"]');
+    el.className = "delta "+(o.dir==="up"?"up":"down");
+    set(deltaKey, arrow(o.dir)+" "+o.deltaPts.toFixed(2)+" pts "+(o.dir==="up"?"higher":"lower"));
+  };
+  compare(D.vsLastYear, 'lyPct', 'lyDelta');
+  compare(D.vs5yr, 'avgPct', 'avgDelta');
 
   // ---- FRAME 3 ----
   set('rainCatch', D.rain.catchmentMM+"<small> mm</small>");
   set('rainCity',  D.rain.cityMM+"<small> mm</small>");
   set('rainVerdict', D.rain.verdict);
   set('catchSeason', Math.round(D.rain.catchmentSeasonMM)+" mm");
-  set('catchNormal', D.rain.catchmentPctNormal+"% of normal");
+  set('catchNormal', D.rain.catchmentPctNormal==null ? "" : D.rain.catchmentPctNormal+"% of normal");
   set('citySeason',  Math.round(D.rain.citySeasonMM)+" mm");
-  set('cityNormal',  D.rain.cityPctNormal+"% of normal");
+  set('cityNormal',  D.rain.cityPctNormal==null ? "" : D.rain.cityPctNormal+"% of normal");
 
   // ---- FRAME 4 ----
   const lakeList = document.getElementById('lakeList');
